@@ -45,6 +45,25 @@ class TestAccountService(TestCase):
         db.session.commit()
 
         self.client = app.test_client()
+    def test_cors_header(self):
+        """It should return a CORS header"""
+        response = self.client.get(
+            "/health",
+            headers={"Origin": "http://localhost:3000"},
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.headers.get("Access-Control-Allow-Origin"),
+            "http://localhost:3000",
+        )
+
+    def test_security_headers(self):
+        """It should return security headers"""
+        response = self.client.get("/health")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("X-Content-Type-Options", response.headers)
+        self.assertIn("X-Frame-Options", response.headers)
+        self.assertIn("Content-Security-Policy", response.headers)
 
     def tearDown(self):
         """Runs once after each test case"""
