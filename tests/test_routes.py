@@ -123,4 +123,59 @@ class TestAccountService(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
-    # ADD YOUR TEST CASES HERE ...
+    def test_read_account(self):
+        """It should Read an Account"""
+        account = AccountFactory()
+        account.create()
+
+        response = self.client.get(f"{BASE_URL}/{account.id}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        new_account = response.get_json()
+        self.assertEqual(new_account["id"], account.id)
+        self.assertEqual(new_account["name"], account.name)
+        self.assertEqual(new_account["email"], account.email)
+        self.assertEqual(new_account["address"], account.address)
+        self.assertEqual(new_account["phone_number"], account.phone_number)
+        self.assertEqual(new_account["date_joined"], str(account.date_joined))
+    def test_read_account_not_found(self):
+        """It should not Read an Account that does not exist"""
+        response = self.client.get(f"{BASE_URL}/0")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)  
+    def test_list_accounts(self):
+        """It should List all Accounts"""
+        self._create_accounts(5)
+
+        response = self.client.get(BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        data = response.get_json()
+        self.assertEqual(len(data), 5)
+    def test_update_account(self):
+        """It should Update an Account"""
+        account = AccountFactory()
+        account.create()
+
+        account.name = "Updated Name"
+
+        response = self.client.put(
+            f"{BASE_URL}/{account.id}",
+            json=account.serialize(),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        new_account = response.get_json()
+        self.assertEqual(new_account["name"], "Updated Name")
+    def test_delete_account(self):
+        """It should Delete an Account"""
+        account = AccountFactory()
+        account.create()
+
+        response = self.client.delete(f"{BASE_URL}/{account.id}")
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        response = self.client.get(f"{BASE_URL}/{account.id}")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
